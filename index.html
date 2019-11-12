@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>豆瓣社交网络展示</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="jquery.js"></script>
+    <script src="vis-4.21.0/dist/vis.js"></script>
+    <script src="http://apps.bdimg.com/libs/require.js/2.1.11/require.min.js"></script>
+    <link href="vis-4.21.0/dist/vis.css" rel="stylesheet" type="text/css" />
+    
+
+    <style type="text/css">
+        body{margin:0; padding:0;}
+        #a{width:100%; height:100%; background-color:gray;}
+        #mynetwork {
+            width: 70%;
+            height: 500px;
+            border: 1px solid black;
+        }
+        
+        #search_display{
+            width: 30%;
+            height: 500px;
+            /* border: 1px solid black; */
+            left: 70%;
+            top: 70px;
+            position:absolute;
+            overflow:auto;
+            background-image: url("img/blackboard.jpg");
+            background-size:cover;
+            opacity: 0.8;
+        }
+        #info1{
+            width:200px;
+            height:25px;
+            display: none;
+        }
+        #info2{
+            width:200px;
+            height:25px;
+            display: none;
+        }
+
+        #queryButton{
+            display: inline;
+        }
+        #options{
+            width:200px;
+            height:30px;
+        }
+        .button{
+            width:50px;
+            height:30px;
+        }
+        #head_container{
+            width: auto;
+
+            height: 70px;
+            font-size: 300%;
+            background-color:#FFF0F5;
+
+        }
+        #head_logo{
+            position: absolute;
+            left: 10px;
+        }
+        
+        #column_logo{
+            position: absolute;
+            right: 0px;
+        }
+        #footer {
+                height: 30px;
+                line-height: 40px;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                background: #333;
+                color: #fff;
+                font-family: Arial;
+                font-size: 12px;
+                letter-spacing: 1px;
+            }
+
+    </style>
+</head>
+
+<body>
+
+    <div id="head_container">
+        <div id="head_logo">
+            <img src="img/main_logo.png">
+        </div>
+        <div id="column_logo">
+                <img src="img/movie_logo.png">
+                <img src="img/book_logo.png">
+                <img src="img/music_logo.png">
+        </div>
+    </div>
+    <div id="display_container">
+            <div id="mynetwork">
+
+            </div>
+    
+            <div id="search_display">
+
+            </div>
+
+    </div>
+    <div id="menu_container">
+        <div class="text">
+            <b>功能选择：</b>
+        </div>
+            <form method = "post" id = "MyForm" onsubmit='return isVaild()'>
+                    <div id='form'>
+                    <select id = "options" name="options" onChange="changeSel()">
+                        <option value="0" selected = "selected" >图的基本信息</option>
+                        <option value="1" >出度最大和入度最大</option>
+                        <option value="2" >PageRank前n</option>
+                        <option value="3"  >图中最大连通分量</option>;
+                    </select>
+                     </div>
+                     <div>
+                    <input type="text" id = "info1" name="info1"  width="200px">
+                    <input type="text" id = "info2" name="info2" width="200px">
+                    
+                    <input type="button" class = "button" id="submit" value = "查询"> 
+                    </div>
+                </form>
+    </div>
+    <div id="footer">CopyRight&copy2019 Kitiro, 饮冰石小组.社会网络分析展示. </div>
+    
+</body>
+<script src="func.js" type="text/javascript"></script>
+</html>
+
