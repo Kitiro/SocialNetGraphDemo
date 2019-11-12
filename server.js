@@ -1,3 +1,9 @@
+/*
+* @Author: Kitiro
+* @Date:   2019-11-12 18:16:45
+* @Last Modified by:   Kitiro
+* @Last Modified time: 2019-11-12 23:27:20
+*/
 //模块调用
 var qs = require('querystring');
 var http = require("http"); 
@@ -12,26 +18,19 @@ var readline = require('readline');
 
 //数据库设置
 var neo4j = require('neo4j-driver').v1;
-var uri = "http://localhost:7474";
+var uri = "bolt://localhost:7687";
 var user = "neo4j";
 var password = "123";
 const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
 const session = driver.session();
 
-var save={
-    'map':[],
-    'total_num',
-};
 
 var flag = 1;
 
 //cypher查询语句
-cypher_all_map = "MATCH (n:User)-[r]->(m:User) RETURN n,m,r"
-
+cypher_all_map = "MATCH p = (n)-[r]-() RETURN p LIMIT 100"
 
 // cypher_find_relation = "MATCH (p:Person {User:$name})-[r:Relation]-(friend) RETURN friend.UserId ORDER BY r.weight DESC LIMIT 10",{name:personNum}
-
-
 
 app.use(express.static(path.join(__dirname, '')));
 app.use(bodyParser());
@@ -39,36 +38,45 @@ app.use(bodyParser());
 app.post('/ppp',function(req,res){
     var now = new Date();
     console.log('Now:'+ now);
-    console.log('a new request '+JSON.stringify(req.body));
+    console.log('a new request '+ JSON.stringify(req.body));
     console.log('from'+ req.connection.remoteAddress);
     console.log('--------------------------------------');
 
     //输出图的基本信息
+
     if(parseInt(req.body.options) == 0){
         // var personName = req.body.info1;
-        var count = 1;
+        var count = 0;
+        var data={
+            'map':[],
+        };
         var resultPromise = session
             .run(
                 cypher_all_map
                 )
             .subscribe({
-                onNext:function(response){
-                    
-                   if(response.get()){
-                        
-                       console.log(record.get('n.UserId') +"  " + record.get('r.Weight')+ record.get('m.ItemId'));
-                        var temp = 'p'+ count;
-                        var temp2 = 'w' + count;
+                onNext:function(response){            
+                   if(response){
+                        console.log(response['_fields'][0].segments[0]);
+                        path = response['_fields'][0].segments[0]
+                        user = path['start'].properties.UserId
+                        relationship = path['relationship'].properties.Weight
+                        item = path['end'].properties.ItemId
+                        data['map'][count] = {
+                            'user':user,
+                            'relationship':relationship,
+                            'item':item,
+                        }
                         count++;
-                        save['map'][count] = [record.get('n.UserId'), record.get('r.Weight'), record.get('m.ItemId')]
-
-                       // console.log('-----------------------------------');
-                        
                    }
                     
                 },
                 onCompleted: function () {
-                    save['total_num'] = count;
+                    data['pathNum'] = count;
+                    console.log(data);
+                    res.send(JSON.stringify(data));
+                    count = 0;
+                    res.end();
                     session.close();
                 },
                 onError: function (error) {
@@ -108,7 +116,10 @@ app.post('/ppp',function(req,res){
                 },
                 onCompleted: function () {
                     save['pathNum'] = pathCount;
-                    
+                    console.log(data);
+                    res.send(data);
+                    count = 0;
+                    res.end();
                     session.close();
                 },
                 onError: function (error) {
@@ -117,17 +128,7 @@ app.post('/ppp',function(req,res){
             })
        
     }
-    setTimeout(function(){
-
-            console.log(save);
-            res.send(save);
-            count = 0;
-            res.end();
-            save = {};
-            
-        },1000);
-   
-
+ 
 })
 
 app.post('/ggg',function(req,res){

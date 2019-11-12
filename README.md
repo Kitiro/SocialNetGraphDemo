@@ -39,6 +39,21 @@
 |------------|-----------|---------|
 | 48899      | 127372    |  1.0    |
 
+### 数据来源 Data Source
+
+```
+@inproceedings{song2019session,
+  title={Session-Based Social Recommendation via Dynamic Graph Attention Networks},
+  author={Song, Weiping and Xiao, Zhiping and Wang, Yifan and Charlin, Laurent and Zhang, Ming and Tang, Jian},
+  booktitle={Proceedings of the Twelfth ACM International Conference on Web Search and Data Mining},
+  pages={555--563},
+  year={2019},
+  organization={ACM}
+}
+```
+
+    https://github.com/DeepGraphLearning/RecommenderSystems/blob/master/socialRec/README.md#douban-data
+
 ## 环境需求 Dependency
 
 neo4j:图数据库

@@ -1,34 +1,67 @@
-
 var nodes = new vis.DataSet();
 var edges = new vis.DataSet();
 
 var container = document.getElementById('mynetwork');
+
 
 var data = {
     nodes:nodes,
     edges:edges
 };
 
+// var options = {
+    
+//     edges:{
+//         arrows: {
+//              to: {enabled: false, scaleFactor: 1},
+//         }
+//     }
+    
+// }
+
+var locales = {
+  en: {
+    edit: 'Edit',
+    del: 'Delete selected',
+    back: 'Back',
+    addNode: 'Add Node',
+    addEdge: 'Add Edge',
+    editNode: 'Edit Node',
+    editEdge: 'Edit Edge',
+    addDescription: 'Click in an empty space to place a new node.',
+    edgeDescription: 'Click on a node and drag the edge to another node to connect them.',
+    editEdgeDescription: 'Click on the control points and drag them to a node to connect to it.',
+    createEdgeError: 'Cannot link edges to a cluster.',
+    deleteClusterError: 'Clusters cannot be deleted.',
+    editClusterError: 'Clusters cannot be edited.'
+  }
+}
+
 var options = {
-    
-    edges:{
-        arrows: {
-             to: {enabled: false, scaleFactor: 1},
-        }
+  autoResize: true,
+  height: '100%',
+  width: '100%',
+  locale: 'en',
+  locales: locales,
+  clickToUse: false,
+  nodes:{
+    color: {
+        highlight:'red',
     }
-    
+  }
 }
 
 var network = new vis.Network(container, data, options);
 
-function addNode(id, label, title) {
-   
-    nodes.add({
+function addNode(id, label, type) {
+    var node = {
         id: id,
         label: label,
-
-    })
-    
+    }
+    if (type == 'to'){
+        node['color'] = '#7FFFAA';
+    }
+    nodes.add(node)
 }
 
 function addEdge(fromId, toId, weight) {
@@ -37,115 +70,34 @@ function addEdge(fromId, toId, weight) {
         to: toId,
     }
    
-        edge['label'] = weight+"";
-         edge.length = 200;
-        edge.arrows = {
-            to: {
-                type: 'circle'
-            }
-        }
+    edge['label'] = weight;
+    edge.length = 250;
+    edge.arrows = 'to';
+        
     edges.add(edge);
 }
 
 
 
-function addHisLog(message) {
-    $('#hisLog').prepend('<div>' + message + '</div>')
-   // $('#hisLog div').remove('div:gt(13)')
-}
-
-function queryTop10(data){
-    
-    $("#hisLog").html('');
-    nodes.clear();
-    edges.clear();
-    
-    var num = data['friendNum'];
-    if(num == 1){
-        alert('抱歉，暂时没有收集到这个人的数据，请重新输入');
-        return ;
-    }
-    else if( num < 11){
-        alert('抱歉，这人的朋友不足10个');
-        
-    }
-    var centerNode = 0;
-    nodes.add({
-        id: 0,
-        label: $('#info1').val(),
-        font:{
-            size:30,
-        }
-    });
-    for(var i= num-1;i > 0; i--){
-        var person = data['p'+i];
-        var weight = data['w'+i];
-        
-        addNode(i,person,null);
-        addEdge(centerNode,i,weight);
-        addHisLog(i + '.Name:' + person + ".  Weight:" + weight);
-    }
-    queryIndividual();
-    
-
-}
-
-function queryShortestPath(data){
-    var length = data.pathLength;
+function option0(data){
     var num = data.pathNum -1;
-
     //alert(JSON.stringify(data));
     nodes.clear();
     edges.clear();
-    nodes.add({
-        id: 0,
-        label: data['path0-0'],
-        font:{
-            size:30,
-        }
-    });
-    nodes.add({
-        id: length,
-        label:data['path'+ num + '-' + length],
-        font:{
-            size:30,
-        }
-    });
-    var weightArray = new Array(num+1);
-    for(var i = 0; i <= num; i++){
-        
-        addNode(""+i+1,data['path'+ i + '-' + 1],null);
-        addEdge(0,""+i+1,data['path'+ i + '-' + 1+'weight']);
-        weightArray[i] =  data['path'+ i + '-' + 1+'weight'];
-        for(var j = 2; j < length;j++){
-            var jj = j-1;
-            
-            addNode(""+i+j,data['path'+ i + '-' + j],null);
-            addEdge(""+i+jj,""+i+j,data['path'+ i + '-' + j+'weight']);
-            weightArray[i] += data['path'+ i + '-' + j+'weight'];
-        }
-        var jj = length -1;
-        
-        addEdge(""+i+(length-1),length,data['path'+ i + '-' + length+'weight']);
-        weightArray[i] += data['path'+ i + '-' + length+'weight'];
-    }
-    
-    var nn = num+1;
-    $("#hisLog").html('');
-    $("#hisLog").html('最短路径长度:'+length+'.<br>');
-    $("#hisLog").append('最短路径共:'+nn +'条.'+'<br>');
-    for(var i=0; i <= num;i++){
-        
-        $("#hisLog").append(i+'.路径总权重:' + weightArray[i] +'.<br>');
-        $("#hisLog").append(data['path'+ i + '-' + 0]);
+    var paths = data['map']
 
-        for(var j = 1; j <= length;j++){
-            $("#hisLog").append(" ---------------" + data['path'+ i + '-' + j + 'weight']+"--------> " 
-            + data['path'+ i + '-' + j] + '<br>') ;
-        }
+    for(var i = 0; i < num; i++){ 
+        var path = paths[i]
+        var user = path['user']
+        var item = path['item']
+        if (!nodes.get(user)){addNode(user, user, 'from');}
+        if (!nodes.get(item)){addNode(item, item, 'to');}
+        
+        addEdge(path['user'],path['item'], path['relationship']);
+        
     }
-    
-
+    $("#search_display").html('');
+    $("#search_display").append("<br>&nbsp;&nbsp;&nbsp;-1代表该user接触过该item但未做出评价");
 }
 
 function qButton2(){
@@ -199,38 +151,13 @@ function isVaildInput(){
     var info = $('#info1').val();
     
     if(!info){
-       
         return false;
     }
     else {
         return true;
     }
+}
 
-}
-function changeSel() {
-    
-    switch(parseInt($('#options').val()) ){
-        case 0:
-            //$('#queryButton').css('display','inline');
-            $('#info1').css('display','none');
-            $('#info2').css('display','none');
-            //$('#submit').css('display','none');
-            break;
-        case 1:
-            //$('#queryButton').css('display','none');
-            $('#info1').css('display','inline');
-            $('#info2').css('display','none');
-            //$('#submit').css('display','inline');
-            break;
-        case 2:
-            //$('#queryButton').css('display','none');
-            $('#info1').css('display','inline');
-            $('#info2').css('display','inline');
-            //$('#submit').css('display','inline');
-            break;
-    }
-    
-}
 
 function  queryIndividual(){
     
@@ -250,13 +177,6 @@ function  queryIndividual(){
     });  
 }
 
-function printIndividual(data){
-    addHisLog("--------------------------------------------");
-    addHisLog("点度中心性：" +data.centrality + ".名次:" +data.centralityNum);
-    addHisLog("Pagerank：" +data.pagerank + ".名次:" +data.pagerankNum);
-    addHisLog("聚集系数：" +data.cluster + ".名次:" +data.clusterNum);
-    
-}
 $(function(){
         $("#submit").click(function(){
 
@@ -270,11 +190,9 @@ $(function(){
                     info2: $("#info2").val()
                 },
                 success: function(data){
-                    alert(1);
+                    
                     if(parseInt($("#options").val()) ==0){
-                        alert('get!')
-                        //queryTop10(data);
-                        
+                        option0(data);
                     }
                     else{
                        queryShortestPath(data);
