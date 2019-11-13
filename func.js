@@ -45,9 +45,15 @@ var options = {
   locales: locales,
   clickToUse: false,
   nodes:{
+    size:30,
     color: {
-        highlight:'red',
+        highlight:'#FF4500',  //选中时为红色
+        background:'#00FFFF', //默认为蓝色
     }
+  },
+  edges:{
+      arrows:'to',
+      color: '#191970'
   }
 }
 
@@ -58,10 +64,14 @@ function addNode(id, label, type) {
         id: id,
         label: label,
     }
+    //若为end point则为黄色
     if (type == 'to'){
-        node['color'] = '#7FFFAA';
+        node.color= {
+            background:'#7CFC00',
+            highlight:'#FF4500',
+        }
     }
-    nodes.add(node)
+    nodes.add(node);
 }
 
 function addEdge(fromId, toId, weight) {
@@ -69,11 +79,16 @@ function addEdge(fromId, toId, weight) {
         from: fromId,
         to: toId,
     }
-   
-    edge['label'] = weight;
-    edge.length = 250;
-    edge.arrows = 'to';
-        
+    edge.label = weight;
+    
+
+    if (weight == '-1'){
+        edge.color = '#FF69B4';
+        edge.length = 250;
+    }
+    else{
+        edge.length = 250/parseInt(weight)
+    }
     edges.add(edge);
 }
 
