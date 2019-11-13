@@ -1,8 +1,9 @@
-# 社交网络demo
+# 社交网络可视化demo
 
-该demo以豆瓣用户的社交数据为节点，包括music, video, book and relation。
+该demo是用于将社会网络可视化以进行更进一步的社会网络分析的研究，以豆瓣用户的社交数据为节点，用户对书籍、音乐、电影的评分为边建立的网络图。
 
-## 数据说明 Data Description
+## Data Description
+
 | Dataset     | #user  | #item   | #event     |
 |-------------|--------|---------|------------|
 | DoubanMovie | 94,890 | 81,906  | 11,742,260 |
@@ -13,7 +14,7 @@
 |-----------|---------|-----------|
 | SocialNet | 695,800 | 1,758,302 |
 
-### 数据样例 Data Sample
+### Data Sample
 
 * book/douban_book.tsv
 
@@ -39,7 +40,9 @@
 |------------|-----------|---------|
 | 48899      | 127372    |  1.0    |
 
-### 数据来源 Data Source
+**其中部分数据的Rating为-1，代表用户接触过这个item，但没有做出评价。**
+
+### Data Source
 
 ```
 @inproceedings{song2019session,
@@ -52,15 +55,19 @@
 }
 ```
 
-    https://github.com/DeepGraphLearning/RecommenderSystems/blob/master/socialRec/README.md#douban-data
+[douban.data](https://github.com/DeepGraphLearning/RecommenderSystems/blob/master/socialRec/README.md#douban-data)
 
-## 环境需求 Dependency
+## Dependency
 
 neo4j:图数据库
 
 vis: 将节点进行展示的js文件
 
 node.js: 一个框架
+
+**主要流程**:将数据导入图数据库，通过nodejs里的neo4j-driver模块访问数据库执行查询并获得数据，再返回到前端通过vis.js进行图节点的展示。
+
+## Tutorial
 
 ### 配置neo4j
 
@@ -143,7 +150,7 @@ neo4j restart
 现在可以在数据库内通过Cypher语句进行一些简单的查询和计算操作，如计算图的结构洞，最大连通分量,community detection等。
 
 ```
-画出整张图
+#画出整张图
 MATCH p=(:Character)-[:INTERACTS]->(:Character)
 RETURN p
 
@@ -152,4 +159,62 @@ MATCH (c:Character {name: row.name})
 SET c.community = toInteger(row.community),
     c.pagerank  = toFloat(row.pagerank)
 
-计算被关注最多的人
+```
+
+### 配置nodejs
+
+```{bash}
+sudo apt-get install nodejs
+sudo apt-get install npm
+
+#将所需模块下载到本目录下node-modules/
+npm install express
+npm install neo4j-driver
+```
+
+### vis.js
+
+这是一个js文件，用于图形网络的展示。
+**基本使用方法**：
+```{js}
+var nodes = new vis.DataSet();
+var edges = new vis.DataSet();
+var container = document.getElementById('mynetwork');
+var data = {
+    nodes:nodes,
+    edges:edges
+};
+
+var options = {
+  autoResize: true,
+  height: '100%',
+  width: '100%',
+  locale: 'en',
+  locales: locales,
+  clickToUse: false,
+  nodes:{
+    color: {
+        highlight:'red',
+    }
+  }
+}
+var network = new vis.Network(container, data, options);
+```
+更多细节见:
+[vis.js Network Docs](https://visjs.github.io/vis-network/docs/network/)
+
+---
+接下来就可以通过nodejs启动服务端，进行demo的展示了。
+**注意**:neo4j的bolt访问，端口为7687，http为7474，在server文件指明neo4j-driver的访问端口时务必注意。
+
+### 本示例启动流程
+
+```{bash}
+#启动neo4j
+neo4j start
+
+#启动服务端
+node server.js
+
+#网页访问
+open localhost:8888
