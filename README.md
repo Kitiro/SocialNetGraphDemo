@@ -65,7 +65,7 @@ vis: 将节点进行展示的js文件
 
 node.js: 一个框架
 
-**主要流程**:将数据导入图数据库，通过nodejs里的neo4j-driver模块访问数据库执行查询并获得数据，再返回到前端通过vis.js进行图节点的展示。
+**主要流程**:将数据导入图数据库，通过nodejs里的neo4j-driver模块访问数据库执行查询并获得数据，再返回到前端通过vis.js进行图节点的展示。
 
 ## Tutorial
 
@@ -175,6 +175,7 @@ npm install neo4j-driver
 ### vis.js
 
 这是一个js文件，用于图形网络的展示。
+
 **基本使用方法**：
 ```{js}
 var nodes = new vis.DataSet();
