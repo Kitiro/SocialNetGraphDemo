@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>豆瓣社交网络展示</title>
+    <title>权力的游戏人物关系网络展示</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <script src="jquery.js"></script>
     <script src="vis-4.21.0/dist/vis.js"></script>
@@ -13,6 +13,7 @@
     <style type="text/css">
         body{margin:0; padding:0;}
         #a{width:100%; height:100%; background-color:gray;}
+
         #mynetwork {
             width: 70%;
             height: 500px;
@@ -31,15 +32,9 @@
             background-size:cover;
             opacity: 0.8;
         }
-        #info1{
+        .info{
             width:200px;
             height:25px;
-            display: none;
-        }
-        #info2{
-            width:200px;
-            height:25px;
-            display: none;
         }
 
         #queryButton{
@@ -55,11 +50,12 @@
         }
         #head_container{
             width: auto;
-
             height: 70px;
             font-size: 300%;
             background-color:#FFF0F5;
-
+            background-image: url("img/head.jpg");
+            background-repeat:no-repeat;
+            background-size:100% 100%;
         }
         #head_logo{
             position: absolute;
@@ -69,6 +65,24 @@
         #column_logo{
             position: absolute;
             right: 0px;
+        }
+        #displayField{
+            position: absolute;
+            left: 12%;
+            top:5%;
+            width: 80%;
+            height: 85%;
+            color:antiquewhite;
+
+        }
+        #cornerGif{
+            width: 200px;
+            height: 200px;
+            position: absolute;
+            right: 0px;
+            bottom: 0px;
+            background-image: url("img/joffery.gif");
+            z-index: 2;
         }
         #footer {
                 height: 30px;
@@ -82,23 +96,24 @@
                 font-family: Arial;
                 font-size: 12px;
                 letter-spacing: 1px;
-            }
-
+                z-index: 1;
+        }
+        
     </style>
 </head>
 
 <body>
 
-    <div id="head_container">
+    <div id="head_container" >
         <div id="head_logo">
             <a href="https://www.douban.com/">
-                <img src="img/main_logo.png">
+                <!-- <img src="img/main_logo.png"> -->
             </a>
         </div>
         <div id="column_logo">
-                <img src="img/movie_logo.png">
+                <!-- <img src="img/movie_logo.png">
                 <img src="img/book_logo.png">
-                <img src="img/music_logo.png">
+                <img src="img/music_logo.png"> -->
         </div>
     </div>
     <div id="display_container">
@@ -107,7 +122,9 @@
             </div>
     
             <div id="search_display">
+                <div id='displayField' >
 
+                </div>
             </div>
 
     </div>
@@ -115,22 +132,26 @@
         <div class="text">
             <b>功能选择：</b>
         </div>
-            <form method = "post" id = "MyForm" onsubmit='return isVaild()'>
+            <form method = "post" id = "MyForm" onsubmit="return isVaild()">
                     <div id='form'>
-                    <select id = "options" name="options" onChange="changeSel()">
-                        <option value="0" selected = "selected" >图的基本信息</option>
-                        <option value="1" >出度最大和入度最大</option>
-                        <option value="2" >PageRank前n</option>
-                        <option value="3"  >图中最大连通分量</option>;
+                    <select id = "option" name="option" >
+                        <option value="0"  >图的基本信息</option>
+                        <option value="1"  >节点中心度</option>
+                        <option value="2"  >发现社区</option>
+                        <option value="3"  selected = "selected" >最短路径</option>;
                     </select>
+                    <input type="text" id = "info1" class="info"  width="200px" value="Tyrion">
+                    <input type="text" id = "info2" class="info" width="200px" value='Karl'>
+                    
                      </div>
                      <div>
-                    <input type="text" id = "info1" name="info1"  width="200px">
-                    <input type="text" id = "info2" name="info2" width="200px">
                     
-                    <input type="button" class = "button" id="submit" value = "查询"> 
+                    <input type="button" class = "button" id="submitButton" value = "查询"> 
                     </div>
                 </form>
+    </div>
+    <div id='cornerGif' >
+        
     </div>
     <div id="footer">CopyRight&copy2019 Kitiro, 饮冰石小组.社会网络分析展示. </div>
     

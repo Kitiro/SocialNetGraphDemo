@@ -1,8 +1,4 @@
-<center >
-    <b><font size=6> 社会关系网络分析</font>
-
-</b>
-</center>
+# 关系网络分析
 
 ## Intro
 本demo以热播电视剧《权力的游戏》*(Game of Thrones)*中出现的部分主要人物作为节点，人物之间同时登场的次数作为他们之间的关系边的权重。
@@ -304,14 +300,11 @@ open localhost:8888
 
 将该网络的所有节点和节点间关联边通过visJs插件进行可视化：
 
-<div align=center >
-    <img  width=100% src="img/all_nodes.png" />
-</div>
+![avatar](https://github.com/Kitiro/SocialNetGraphDemo/blob/master/img/all_nodes.png)
 
 通过NetworkX的k_clique_communities函数进行该网络的社区发现。
-<div align=center >
-    <img  width=100% src="img/community_k=3.png" />
-</div>
+
+![avatar](https://github.com/Kitiro/SocialNetGraphDemo/blob/master/img/community_k%3D3.png)
 
 clique_size为4时，该网络中共找到8个社区，通过不同颜色的节点标识出其属于的社区。对于不属于社区的节点标蓝色。
 **Note**:存在部分共享节点无法表示，所以导致网络图显示不太符合预期。
@@ -323,6 +316,4 @@ clique_size为4时，该网络中共找到8个社区，通过不同颜色的节�
 
 * 查询最短路径
 
-<div align=center>
-    <img  width=80%  src="img/shortest_path.png" />
-</div>
+ ![avatar](https://github.com/Kitiro/SocialNetGraphDemo/blob/master/img/shortest_path.png)
