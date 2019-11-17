@@ -1,3 +1,9 @@
+/*
+* @Author: kitiro
+* @Date:   2019-11-14 10:31:22
+* @Last Modified by:   kitiro
+* @Last Modified time: 2019-11-14 10:33:48
+*/
 var nodes = new vis.DataSet();
 var edges = new vis.DataSet();
 
@@ -9,15 +15,6 @@ var data = {
     edges:edges
 };
 
-// var options = {
-    
-//     edges:{
-//         arrows: {
-//              to: {enabled: false, scaleFactor: 1},
-//         }
-//     }
-    
-// }
 
 var locales = {
   en: {
@@ -45,7 +42,7 @@ var options = {
   locales: locales,
   clickToUse: false,
   nodes:{
-    size:30,
+    shape:'circle',
     color: {
         highlight:'#FF4500',  //选中时为红色
         background:'#00FFFF', //默认为蓝色
@@ -53,25 +50,25 @@ var options = {
   },
   edges:{
       arrows:'to',
-      color: '#191970'
+      color: '#191970',
+      length:250,
   }
 }
 
+// 颜色列表用于标记社区
+var color_list = ['#00FFFF','#FF83FA', '#B3EE3A', '#CD2626', '#912CEE', '#949494', '#7A378B','#8E8E38','#1F1F1F']
+
 var network = new vis.Network(container, data, options);
 
-function addNode(id, label, type) {
+function addNode(id, label, size=30, type=0) {
     var node = {
         id: id,
         label: label,
+        size: size,
     }
-    //若为end point则为黄色
-    if (type == 'to'){
-        node.color= {
-            background:'#7CFC00',
-            highlight:'#FF4500',
-        }
-    }
-    nodes.add(node);
+    node.color = color_list[parseInt(type)];
+    nodes.add(node); 
+    
 }
 
 function addEdge(fromId, toId, weight) {
@@ -79,149 +76,236 @@ function addEdge(fromId, toId, weight) {
         from: fromId,
         to: toId,
     }
-    edge.label = weight;
+    edge.label = weight+'';
     
-
-    if (weight == '-1'){
-        edge.color = '#FF69B4';
-        edge.length = 250;
-    }
-    else{
-        edge.length = 250/parseInt(weight)
-    }
     edges.add(edge);
 }
 
 
-
-function option0(data){
+function option0(res){
+    //console.log(res);
+    //res = JSON.parse(res);  //将被JSON.stringfy转成的字符串转换成JSON对象
+    var data = res.data;
+    var values = res.values;
     var num = data.pathNum -1;
-    //alert(JSON.stringify(data));
+
+    //values = values.split(',');
+    var value_dict = {}
+
+    for(var i =0; i < values.length; i++ ){
+        var row = values[i].split('\t');
+        value_dict[row[0]] = row[1];
+    }
     nodes.clear();
     edges.clear();
     var paths = data['map']
 
     for(var i = 0; i < num; i++){ 
         var path = paths[i]
-        var user = path['user']
-        var item = path['item']
-        if (!nodes.get(user)){addNode(user, user, 'from');}
-        if (!nodes.get(item)){addNode(item, item, 'to');}
+        var c1 = path['c1']
+        var c2 = path['c2']
+
+        var value1 = parseFloat(value_dict[c1]);
+        var value2 = parseFloat(value_dict[c2]);
+
+        if (!nodes.get(c1)){addNode(c1, c1, 6000*value1);}
+        if (!nodes.get(c2)){addNode(c2, c2, 6000*value2);}
         
-        addEdge(path['user'],path['item'], path['relationship']);
-        
+        addEdge(c1,c2, path['relationship']);
+
     }
-    $("#search_display").html('');
-    $("#search_display").append("<br>&nbsp;&nbsp;&nbsp;-1代表该user接触过该item但未做出评价");
-}
-
-function qButton2(){
-    
-    $("#hisLog").html('');
-    $("#hisLog").append("<tr><th style = 'width:30%'>Pagerank影响力排行榜</th></tr>");
-    $("#hisLog").append("<table><tr><th>排名</th><th>名称</th><th>数值</th></tr>");
-    $("#hisLog").append("<tr><td>1</td><td>习近平</td><td>0.004594</td></tr>");
-    $("#hisLog").append("<tr><td>2</td><td>胡锦涛</td><td>0.002610</td></tr>");
-    $("#hisLog").append("<tr><td>3</td><td>温家宝</td><td>0.001643</td></tr>");
-    $("#hisLog").append("<tr><td>4</td><td>李克强</td><td>0.001519</td></tr>");
-    $("#hisLog").append("<tr><td>5</td><td>徐建平</td><td>0.001062</td></tr>");
-    $("#hisLog").append("<tr><td>6</td><td>邱小琪</td><td>0.001034</td></tr>");
-    $("#hisLog").append("<tr><td>7</td><td>程永华</td><td>0.000997</td></tr>");
-    $("#hisLog").append("<tr><td>8</td><td>杨厚兰</td><td>0.000996</td></tr>");
-    $("#hisLog").append("<tr><td>9</td><td>伍江</td><td>0.000906</td></tr>");
-    $("#hisLog").append("<tr><td>10</td><td>罗林泉</td><td>0.000902</td></tr>");
-     $("#hisLog").append("<button style = 'width:70px;height:30px; position:absolute;right:86%;top:450px;'id = 'qButton1' onClick = 'qButton1()'>图信息</button>  ");
-    $("th").css({"width": "9%",
-                "height": "40px",
-                "font-size": "140%",
-                "border": "1px solid black"});
-    $("td").css({"width": "15%",
-                "height": "30px",
-                "border": "1px solid gray"});
+    $("#displayField").html('');
+    $("#displayField").append("本网络结构共107个节点，352条有向边，704条无向边");
 
 }
-function qButton1(){
-    
-    $("#hisLog").html('');
-    $("#hisLog").append("<table ><tr><th>图属性</th><th>数据</th></tr>");
-    $("#hisLog").append("<tr><td><big>结点数:</big></td><td> 80786</td></tr>");
-    $("#hisLog").append("<tr><td><big>边数: </big></td><td> 1733953</td></tr>");
-    $("#hisLog").append("<tr><td><big>连通分量数:</big></td><td> 1690</td></tr>");
-    $("#hisLog").append('<tr><td><big>最大连通分量:</big></td><td> 78006</td></tr>');
-    $("#hisLog").append("<button style = 'width:70px;height:30px; position:absolute;right: 0;top:450px;'id = 'qButton2' onClick = 'qButton2()'>Pagerank</button>  ");   
-    
+
+function option1(res){
+
+    //alert(JSON.stringify(data));
+    var data = res['data']
+    $("#displayField").html('');
+    $("#displayField").append("<tr><th style = 'width:30%'>节点度中心性</th></tr>");
+    $("#displayField").append("<table><tr><th>角色名</th><th>度中心性</th><th>加权度中心性</th></tr>");
+    for(var i = 0; i<10; i++){
+        var row = data[i];
+        var name = row.name;
+        var weight = row.degree;
+        var weightedDegree = row.weightedDegree;
+        $("#displayField").append("<tr><td>"+name+"</td><td>"+weight+"</td><td>"+weightedDegree+"</td></tr>");
+    }
+    $("table").css({
+        "border-collapse": "collapse"
+    });
     $("th").css({"width": "15%",
-                "height": "40px",
-                "font-size": "140%",
-                "border": "1px solid black"});
+                "height": "30px",
+                "font-size": "105%",
+                "font-weight":"bold",
+                "border": "1px solid gray",
+    });
     $("td").css({"width": "15%",
                 "height": "30px",
-                "border": "1px solid gray"});
+                "border": "1px solid gray",
+                "text-align":"center",
+    });
+    
 }
 
-
-
-
-function isVaildInput(){
-    var info = $('#info1').val();
-    
-    if(!info){
-        return false;
+//打印社区
+function option2(res){ 
+    var community_info = res['community'];
+    //共搜到4种社区划分方法，选择k=5时进行展示
+    //console.log(community_info);
+    var row = 0;
+    var comm_list = []; 
+    for(var i = 0; i < 3; i++){
+        var comm_dict = {
+            'community_nodes_num':[],
+            'community_split':[],
+            'map':{},
+           
+        }; //社区节点对应词典
+        var community_num = community_info[row]; //该k值找到的社区数
+        comm_dict['community_num'] = community_num;
+        row += 1
+        for(var j = 0; j < community_num; j++){
+            var node_num = community_info[row]; //该社区的节点数
+            comm_dict['community_nodes_num'][j] = node_num;
+            row += 1;
+            comm_dict.community_split[j] = ''
+            for(var q = 0; q < node_num; q++){
+                var character = community_info[row];
+                comm_dict.community_split[j] += character+' '
+                comm_dict.map[character] = j+1;
+                row += 1;
+            }
+        }
+        comm_list[i] = comm_dict;
     }
-    else {
+    var w = 1;
+    console.log(comm_list[w]);
+    console.log(comm_list[w].map.length);
+    // 后续再添加进行多种社区同时展示的功能
+
+    var data = res.data;
+    var num = data.pathNum -1;
+    var comm_split = comm_list[w].map;
+    nodes.clear();
+    edges.clear();
+    var paths = data['map']
+
+    for(var i = 0; i < num; i++){ 
+        var path = paths[i]
+        var c1 = path['c1']
+        var c2 = path['c2']
+
+        if (!nodes.get(c1)){addNode(c1, c1, 30, comm_split[c1]);}
+        if (!nodes.get(c2)){addNode(c2, c2, 30, comm_split[c2]);}
+        
+        addEdge(c1,c2, path['relationship']);
+
+    }
+    
+}
+
+function option3(res){
+    console.log(res);
+    var paths = res.data.path;   //路径节点
+    var length = res.data.length;
+
+    nodes.clear();
+    edges.clear();
+    var start = paths[0];
+    addNode(start, start,30,type=1);
+    var lastOne = start;  //存储上一个节点
+    $("#displayField").html('');
+    $("#displayField").append("从",paths[0],'到',paths[length],'的最短路径长度为',length+'<br>');
+    for(var i = 1; i < length+1; i++){ 
+        var node = paths[i]
+        if (i==length){
+            addNode(node, node,30,type=1);
+        }
+        else{
+            addNode(node, node,30);
+        }
+        addEdge(lastOne,node, 'Next');
+        lastOne = node;
+        $("#displayField").append(i,'&nbsp;&nbsp;',paths[i-1],'->',paths[i]+'<br>');
+    }
+    
+}
+
+function isValid(){
+    var option = parseInt($("#option").val());
+    var info1 = $("#info1").val();
+    var info2 =$("#info2").val();
+    if(option == 3){
+        if (info1&&info2){
+            return true;
+        }
+        else{
+            alert('input value');
+            return false;
+        }
+    }
+    else{
         return true;
     }
-}
-
-
-function  queryIndividual(){
     
-    $.ajax({
-        type:'post',
-        url:'/ggg',
-        dataType:'json',
-        data: {
-            person:$("#info1").val()
-        },
-        success: function(data){
-            printIndividual(data);
-        },
-        error: function(jqXHR, textStatus, errorThrown){
-             alert('error ' + textStatus + " " + errorThrown);  
-        }
-    });  
 }
-
 $(function(){
-        $("#submit").click(function(){
-
-         $.ajax({
-                type:'post',
-                url: '/ppp',
-                dataType: 'json',
-                data:{
-                    options: $("#options").val(),
-                    info1: $("#info1").val(),
-                    info2: $("#info2").val()
-                },
-                success: function(data){
-                    
-                    if(parseInt($("#options").val()) ==0){
-                        option0(data);
+        $("#submitButton").click(function(){
+            var option = parseInt($("#option").val());
+            var res = {};
+            if (option == 0){
+                var obj = $.ajax({url:"graph_info/pagerank.txt",async:false});
+                var result = obj['responseText'];
+                var rows = result.split("\n");
+                res['values'] = rows;
+            }
+            if(option == 2){
+                var obj = $.ajax({url:"graph_info/community.txt",async:false});
+                var result = obj['responseText'];
+                var rows = result.split("\n");
+                res['community'] = rows;
+            }
+            
+            $.ajax({
+                    type:'post',
+                    url: '/ppp',
+                    dataType: 'json',
+                    data:{
+                        option: $("#option").val(),
+                        info1: $("#info1").val(),
+                        info2: $("#info2").val()
+                    },
+                    success: function(data){
+                        res['data'] = data;
+                        switch (option){
+                            case 0:
+                                option0(res);
+                                break;
+                            case 1:
+                                option1(res);
+                                break;
+                            case 2:
+                                option2(res);
+                                break;
+                            case 3:
+                                option3(res);
+                                break;
+                        }
+                        
+                        
+                    },
+                    error: function(jqXHR, textStatus, errorThrown){
+                        alert('error ' + textStatus + " " + errorThrown);  
+                        
                     }
-                    else{
-                       queryShortestPath(data);
-                    }
-                    
-                },
-                error: function(jqXHR, textStatus, errorThrown){
-                    alert('error ' + textStatus + " " + errorThrown);  
-                    
-                }
-            });
+                });
 
            
-        });
+            });
+    
 });
 
      

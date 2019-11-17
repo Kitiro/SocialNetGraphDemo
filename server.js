@@ -28,9 +28,16 @@ const session = driver.session();
 var flag = 1;
 
 //cypher查询语句
-cypher_all_map = "MATCH p = (n)-[r]-() RETURN p LIMIT 100"
+all_relation = "MATCH p = ()-[r]->() RETURN p"
+count_node = "MATCH (c:Character) RETURN count(c)"
 
-// cypher_find_relation = "MATCH (p:Person {User:$name})-[r:Relation]-(friend) RETURN friend.UserId ORDER BY r.weight DESC LIMIT 10",{name:personNum}
+centrality = "MATCH p = (c:Character)-[r:INTERACTS]-() RETURN c.name AS character, count(*) AS degree, sum(r.weight) AS weightedDegree ORDER BY weightedDegree DESC LIMIT 10"
+shortest_path = "MATCH path=shortestPath((start:Character {name:$start})-[INTERACTS*]-(end:Character {name:$end}))  RETURN path"
+// MATCH (catelyn:Character {name: "Catelyn"}), (drogo:Character {name: "Drogo"})
+// MATCH p=shortestPath((catelyn)-[INTERACTS*]-(drogo))
+// RETURN p
+
+
 
 app.use(express.static(path.join(__dirname, '')));
 app.use(bodyParser());
@@ -43,29 +50,31 @@ app.post('/ppp',function(req,res){
     console.log('--------------------------------------');
 
     //输出图的基本信息
-
-    if(parseInt(req.body.options) == 0){
-        // var personName = req.body.info1;
+    var option = parseInt(req.body.option)
+    if(option == 0 || option == 2){
+        
         var count = 0;
         var data={
             'map':[],
         };
+
         var resultPromise = session
             .run(
-                cypher_all_map
+                all_relation,
                 )
             .subscribe({
                 onNext:function(response){            
                    if(response){
-                        console.log(response['_fields'][0].segments[0]);
+
                         path = response['_fields'][0].segments[0]
-                        user = path['start'].properties.UserId
-                        relationship = path['relationship'].properties.Weight
-                        item = path['end'].properties.ItemId
+                        name1 = path['start'].properties.name
+                        relationship = path['relationship'].properties.weight.low
+                        console.log(path['end'])
+                        name2 = path['end'].properties.name
                         data['map'][count] = {
-                            'user':user,
+                            'c1':name1,
                             'relationship':relationship,
-                            'item':item,
+                            'c2':name2,
                         }
                         count++;
                    }
@@ -73,7 +82,8 @@ app.post('/ppp',function(req,res){
                 },
                 onCompleted: function () {
                     data['pathNum'] = count;
-                    console.log(data);
+                    console.log(count + ' path found');
+                    console.log('search succeed');
                     res.send(JSON.stringify(data));
                     count = 0;
                     res.end();
@@ -84,19 +94,93 @@ app.post('/ppp',function(req,res){
                 }
             })
         
-       
     }
-    else if(parseInt(req.body.options) == 2){  //查找最短路径
+    else if(option == 1){   //中心度
+        var count = 0;
+        var data=[];
+        var resultPromise = session
+            .run(
+                centrality,
+                )
+            .subscribe({
+                onNext:function(response){            
+                   if(response){
+                        //console.log(response);
+                        name = response['_fields'][0]
+                        degree = response['_fields'][1].low
+                        weightedDegree = response['_fields'][2].low
+
+                        data[count] = {
+                            'name':name,
+                            'degree':degree,
+                            'weightedDegree':weightedDegree,
+                        }
+                        count++;
+                   }
+                    
+                },
+                onCompleted: function () {
+
+                    res.send(JSON.stringify(data));
+
+                    count = 0;
+                    res.end();
+                    session.close();
+                },
+                onError: function (error) {
+                     console.log(error);
+                }
+            })
+    }
+    //最短路径
+    else if(option == 3){
+        var data={
+            'path':[]
+        };
+        var name1 = req.body.info1;
+        var name2 = req.body.info2;
+
+        var resultPromise = session
+            .run(
+                shortest_path,{start:name1, end:name2}
+                )
+                .subscribe({
+                    onNext:function(response){            
+                       if(response){
+                            
+                            paths = response['_fields'][0].segments;
+                            length = response['_fields'][0].length;
+                            data['length'] = length;
+                            data['path'][0] = name1;
+                            for(var i = 0; i < length; i++){
+                                data['path'][i+1] = paths[i].end.properties.name;
+                            }
+                       }
+                        
+                    },
+                    onCompleted: function () {
+                        
+                        console.log('shortest path :',length,'. from',name1,'to',name2);
+                        console.log('search succeed');
+                        res.send(data);
+                        res.end();
+                        session.close();
+                    },
+                    onError: function (error) {
+                         console.log(error);
+                    }
+                })
+        
+    }
+    //查找最短路径
+    else if(option == 4){  
         
         var personName = req.body.info1;
         var personName2 = req.body.info2;
         var pathCount = 0;
         var resultPromise = session
             .run(
-                 //'MATCH (a:Person {person: $name}) RETURN a',
-                // {name: personName}
-                //'MATCH (p1:Person {person: $name}) MATCH (p2:Person{person: $name2}) MATCH p = allShortestPaths((p1)-[*..]-(p2))RETURN relationships(p),length(p),nodes(p)',
-                'Match (n:Person {person: $name}), (m:Person {person: $name2}), p =allShortestPaths((n)-[r*1..20]-(m)) with reduce(weight = 0, rel in rels(p) | weight + rel.weight) AS weight, n, m,p return relationships(p),length(p),nodes(p) order by weight desc limit 10',
+                 'Match (n:Person {person: $name}), (m:Person {person: $name2}), p =allShortestPaths((n)-[r*1..20]-(m)) with reduce(weight = 0, rel in rels(p) | weight + rel.weight) AS weight, n, m,p return relationships(p),length(p),nodes(p) order by weight desc limit 10',
                 {name: personName,name2:personName2}
                 )
             .subscribe({
@@ -128,92 +212,7 @@ app.post('/ppp',function(req,res){
             })
        
     }
- 
-})
-
-app.post('/ggg',function(req,res){
    
-    if(req){
-        var data = {
-
-        };
-        var person = req.body.person;
-        
-        var filepath1 = path.join(__dirname, "/info/pagerank.txt")
-        var input1 = fs.createReadStream(filepath1)
-        input1.setEncoding('utf8');
-        var rl1 = readline.createInterface({
-            input: input1
-        });
-        rl1.on('line', (line) => {
-            if(line.match(person)){
-
-                var arr = line.split(',');
-                
-                data['pagerank'] = arr[2];
-                data['pagerankNum'] = arr[3];
-                rl1.close();
-            }
-
-        });
-        // rl.on('close', (line) => {
-        //     console.log("pagerank读取完毕！");
-        // });
-        var filepath2 = path.join(__dirname, "/info/cluster.txt")
-        var input2 = fs.createReadStream(filepath2)
-        input2.setEncoding('utf8');
-        rl2 = readline.createInterface({
-            input: input2
-        });
-        rl2.on('line', (line) => {
-            if(line.match(person)){
-
-                var arr = line.split(',');
-                
-                data['cluster'] = arr[2];
-                data['clusterNum'] = arr[3];
-                rl2.close();
-            }
-
-        });
-        
-        var filepath3 = path.join(__dirname, "/info/centrality.txt")
-        var  input3 = fs.createReadStream(filepath3);
-        
-        input3.setEncoding('utf8');
-        rl3 = readline.createInterface({
-            input: input3
-        });
-        
-        rl3.on('line', (line) => {
-            
-            if(line.match(person)){
-
-                var arr = line.split(',');
-                
-                data['centrality'] = arr[2];
-                data['centralityNum'] = arr[3];
-                rl3.close();
-            }
-        });
-
-        setTimeout(function(){
-
-            res.send(data);
-             res.end();
-        },600);
-        
-
-    }
-    // fs.readFile(url+'pagerank.txt',function(err,data){
-    //      if(err){
-    //         console.log("failed")
-    //      }else{
-    //         console.log("ok");
-    //         console.log(data.readLine);
-            
-    //     }
-    // })
 })
 
 app.listen(8888,function(){
